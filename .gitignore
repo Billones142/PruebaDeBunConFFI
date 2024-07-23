@@ -1,0 +1,4 @@
+*.dll
+*.lib
+*.pbd
+node_modules
