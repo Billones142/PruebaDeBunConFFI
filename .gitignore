@@ -1,4 +1,7 @@
-*.dll
-*.lib
-*.pbd
 node_modules
+*.dll
+*.so
+*.dylib
+*.lib
+*.pdb
+*.exp
