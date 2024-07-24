@@ -45,7 +45,7 @@ async function executeAllLibraries() {
   const directories= await searchForDirectoryIn(source);
   const maxNameLength= (() : number => Math.max(...directories.map(str => str.length)))();
 
-  console.log('Libraries Directories found:',directories);
+  console.log('Library Directories found:',directories);
 
   const filename = 'mylib';
 
@@ -56,7 +56,7 @@ async function executeAllLibraries() {
     try {
       const result= executeFromLibrary(libraryDirectory,filename)
       resultMessage= `Result: ${result}`;
-    } catch (error) {
+    } catch (error : any) {
       resultMessage= error.message;
     }
     let spaces : string= '';
