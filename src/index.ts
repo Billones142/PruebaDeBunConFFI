@@ -1,71 +1,67 @@
-import { dlopen, FFIType, suffix } from "bun:ffi";
-import { resolve , join} from "path";
-import { existsSync , statSync } from "fs";
+import { suffix } from "bun:ffi";
+import { resolve, join } from "path";
+import { existsSync } from "fs";
 import { readdir } from "node:fs/promises";
+import { extractLibraryFunctions } from "./libraryReader";
+import inquirer from "./inquirer";
 
 
 
-
-
-function executeFromLibrary(directoryFilePath : string, fileName : string) : number {
+function executeFromLibrary(directoryFilePath: string, fileName: string): { stringConcat: string | undefined, sum: number | undefined } {
   // Verifica si el archivo DLL existe
-  const directoryAndFile= join(directoryFilePath,fileName).concat(`.${suffix}`);
+  const directoryAndFile = join(directoryFilePath, fileName).concat(`.${suffix}`);
   if (!existsSync(directoryAndFile)) {
     throw new Error("The file doesn't exist");
-    ;
   }
+
+
+  const { add, concatStrings } = extractLibraryFunctions(directoryAndFile)
   // crea una constante que se comporta como una funcion de Bun
-  const {
-    symbols: {
-      add, // Asegúrarse de que este nombre coincida con la función del DLL
-    },
-  } = dlopen(directoryAndFile, {
-    add: { // Asegúrarse de que este nombre coincida con la función del DLL
-      args: [FFIType.i32, FFIType.i32], // Tipos de argumentos
-      returns: FFIType.i32, // Tipo de retorno
-    },
-  });
 
-  return add(5, 3);
+  const sumResult = add ? add(5, 3) : undefined;
+
+  const concatenatedStr = concatStrings ? concatStrings('Hello ', 'World!') : undefined;
+
+
+  return { stringConcat: concatenatedStr, sum: sumResult };
 }
 
-async function searchForDirectoryIn(source:string) : Promise<string[]> {
-  return (await readdir(source, { recursive: false , withFileTypes: true}))
-    .filter((fileOrDirectory) : boolean => {
-      return fileOrDirectory.isDirectory()
-    }
-  )
-  .map(directory => {
-    return directory.name;
-  });
+async function searchForDirectoryIn(source: string): Promise<string[]> {
+  return (await readdir(source, { recursive: false, withFileTypes: true }))
+    .filter(fileOrDirectory => fileOrDirectory.isDirectory())
+    .map(directory => directory.name);
 }
 
-async function executeAllLibraries() {
-  const source= join(__dirname,'./Libraries')
-  const directories= await searchForDirectoryIn(source);
-  const maxNameLength= (() : number => Math.max(...directories.map(str => str.length)))();
+async function executeAllLibraries(libraryFilename: string) {
+  const source = join(__dirname, './Libraries')
+  const directories = await searchForDirectoryIn(source);
+  const maxNameLength = Math.max(...directories.map(str => str.length));
 
-  console.log('Library Directories found:',directories);
+  console.log('Library Directories found:', directories);
 
-  const filename = 'mylib';
+  for (let index = 0; index < directories.length; index++) {
+    const libraryDirectory = resolve('src', 'Libraries', directories[index]);
 
-  for (let index = 0; index < directories.length ; index++) {
-    const libraryDirectory = resolve('src','Libraries',directories[index]);
-    
-    let resultMessage : string;
+    let resultMessage: string;
+
     try {
-      const result= executeFromLibrary(libraryDirectory,filename)
-      resultMessage= `Result: ${result}`;
-    } catch (error : any) {
-      resultMessage= error.message;
+      const { sum, stringConcat } = executeFromLibrary(libraryDirectory, libraryFilename)
+
+      resultMessage = `Result: num: ${sum} string: ${stringConcat}`;
+    } catch (error: any) {
+      resultMessage = error.message;
     }
-    let spaces : string= '';
-    for (let i = directories[index].length; i < maxNameLength ; i++) {
-      spaces= spaces.concat(' ');
+    let spaces: string = '';
+    for (let i = directories[index].length; i < maxNameLength; i++) {
+      spaces += ' ';
     }
-    console.log(directories[index].concat(spaces), '| '.concat(resultMessage));
-    
+    console.log(directories[index] + spaces, '| ' + resultMessage);
+
   }
 }
 
-await executeAllLibraries();
+/*async function askUser() {
+  inquirer('que libreria quieres usar?')
+}*/
+
+await executeAllLibraries('mylib');
