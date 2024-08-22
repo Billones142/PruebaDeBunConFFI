@@ -41,7 +41,7 @@ macOs:
 clean_windows: windows
 	#$(ifWindows) $(rm_command) ".\\$(bin_output_name).dll.exp"
 	#$(ifWindows) $(rm_command) ".\\$(bin_output_name).dll.lib"
-	$(ifWindows) $(rm_command) ".\\.o"
+	#$(ifWindows) $(rm_command) ".\\.o"
 	$(ifWindows) $(rm_command) ".\\$(bin_output_name).dll.obj"
 	$(ifWindows) $(rm_command) ".\\$(bin_output_name).lib"
 	$(ifWindows) $(rm_command) ".\\$(bin_output_name).pdb"
